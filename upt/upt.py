@@ -10,6 +10,7 @@ Australian Centre for Robotic Vision
 import os
 import torch
 import torch.distributed as dist
+import numpy as np
 
 
 from torch import nn, Tensor
@@ -99,8 +100,9 @@ class UPT(nn.Module):
             box_iou(boxes_o, gt_bx_o)
         ) >= self.fg_iou_thresh).unbind(1)
 
-        labels[x, targets['labels'][y]] = 1
-
+        yy = targets['labels'][y]
+        labels[x, targets['labels'][y]] = 1  # set correspond [human verb object] to 1
+        # print("labels", labels)
         return labels
 
     def compute_interaction_loss(self, boxes, bh, bo, logits, prior, targets):
@@ -109,7 +111,7 @@ class UPT(nn.Module):
             for bx, h, o, target in zip(boxes, bh, bo, targets)
         ])
         prior = torch.cat(prior, dim=1).prod(0)
-        x, y = torch.nonzero(prior).unbind(1)
+        x, y = torch.nonzero(prior).unbind(1)  # return idx of non zero value
         logits = logits[x, y]; prior = prior[x, y]; labels = labels[x, y]
 
         n_p = len(torch.nonzero(labels))
@@ -230,16 +232,18 @@ class UPT(nn.Module):
         """
         if self.training and targets is None:
             raise ValueError("In training mode, targets should be passed")
-        image_sizes = torch.as_tensor([
-            im.size()[-2:] for im in images
-        ], device=images[0].device)
+        self.tensor = torch.as_tensor([im.size()[-2:] for im in images], device=images[0].device)
+        image_sizes = self.tensor
 
         if isinstance(images, (list, torch.Tensor)):
             images = nested_tensor_from_tensor_list(images)
+
+        # hat is here, dimensions, meaning of each dimension
         features, pos = self.detector.backbone(images)
 
         src, mask = features[-1].decompose()
         assert mask is not None
+        # hs = self.detector.transformer(self.detector.input_proj(src), mask, self.detector.query_embed.weight, pos[-1])[0]
         hs = self.detector.transformer(self.detector.input_proj(src), mask, self.detector.query_embed.weight, pos[-1])[0]
 
         outputs_class = self.detector.class_embed(hs)
@@ -254,8 +258,19 @@ class UPT(nn.Module):
         )
         boxes = [r['boxes'] for r in region_props]
 
+        """0623 comment for only train detector"""
         if self.training:
             interaction_loss = self.compute_interaction_loss(boxes, bh, bo, logits, prior, targets)
+            """change below 0622 try to give the o loss to 1"""
+            if np.isnan(interaction_loss.item()):
+                interaction_loss.add_(1)  # for nan does not work
+                # interaction_loss = torch.ones_like(interaction_loss)
+                # interaction_loss = torch.zeros_like(interaction_loss)
+                # interaction_loss.add_(0.8)
+
+                # interaction_loss = torch.ones(0)
+                # interaction_loss.scatter_(1, 0, 1)
+            """end here"""
             loss_dict = dict(
                 interaction_loss=interaction_loss
             )

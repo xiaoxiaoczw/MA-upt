@@ -60,6 +60,17 @@ def main(rank, args):
         sampler=torch.utils.data.SequentialSampler(testset)
     )
 
+    """change below"""
+    for X, y in test_loader:
+        print(X)
+        print(y)
+        # TODO
+        # doesnot work yet
+        # print(f"Shape of X [N, C, H, W]: {X.shape}")
+        # print(f"Shape of y: {y.shape} {y.dtype}")
+        break
+    """end here"""
+
     args.human_idx = 0
     if args.dataset == 'hicodet':
         object_to_target = train_loader.dataset.dataset.object_to_verb
@@ -67,6 +78,10 @@ def main(rank, args):
     elif args.dataset == 'vcoco':
         object_to_target = list(train_loader.dataset.dataset.object_to_action.values())
         args.num_classes = 24
+    # add in 20220524
+    elif args.dataset == 'vidhoi':
+        object_to_target = train_loader.dataset.dataset.object_to_verb
+        args.num_classes = 117  # cannot change to 50
     
     upt = build_detector(args, object_to_target)
 
@@ -91,12 +106,17 @@ def main(rank, args):
             engine.cache_hico(test_loader, args.output_dir)
         elif args.dataset == 'vcoco':
             engine.cache_vcoco(test_loader, args.output_dir)
+        elif args.dataset == 'vidhoi':
+            engine.cache_vidhoi(test_loader, args.output_dir)
         return
 
     if args.eval:
         if args.dataset == 'vcoco':
             raise NotImplementedError(f"Evaluation on V-COCO has not been implemented.")
-        ap = engine.test_hico(test_loader)
+        elif args.dataset == 'hicodet':
+            ap = engine.test_hico(test_loader)
+        elif args.dataset == 'vidhoi':
+            ap = engine.test_vidhoi(test_loader)
         # Fetch indices for rare and non-rare classes
         num_anno = torch.as_tensor(trainset.dataset.anno_interaction)
         rare = torch.nonzero(num_anno < 10).squeeze(1)
@@ -139,8 +159,10 @@ def sanity_check(args):
 if __name__ == '__main__':
     
     parser = argparse.ArgumentParser()
+    # parser.add_argument('--lr-head', default=1e-4, type=float) # defaults
     parser.add_argument('--lr-head', default=1e-4, type=float)
-    parser.add_argument('--batch-size', default=2, type=int)
+    # parser.add_argument('--batch-size', default=2, type=int) # defaults
+    parser.add_argument('--batch-size', default=4, type=int)
     parser.add_argument('--weight-decay', default=1e-4, type=float)
     parser.add_argument('--epochs', default=20, type=int)
     parser.add_argument('--lr-drop', default=10, type=int)

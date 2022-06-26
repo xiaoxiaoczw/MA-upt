@@ -19,6 +19,8 @@ from torch.utils.data import Dataset
 
 from vcoco.vcoco import VCOCO
 from hicodet.hicodet import HICODet
+# import vidhoi
+from vidhoi.vidhoi import vidhoi
 
 import pocket
 from pocket.core import DistributedLearningEngine
@@ -27,6 +29,8 @@ from pocket.utils import DetectionAPMeter, BoxPairAssociation
 import sys
 sys.path.append('detr')
 import datasets.transforms as T
+
+import json
 
 def custom_collate(batch):
     images = []
@@ -38,7 +42,10 @@ def custom_collate(batch):
 
 class DataFactory(Dataset):
     def __init__(self, name, partition, data_root):
-        if name not in ['hicodet', 'vcoco']:
+        # defaults here
+        # if name not in ['hicodet', 'vcoco']:
+        #     raise ValueError("Unknown dataset ", name)
+        if name not in ['hicodet', 'vcoco', 'vidhoi']:
             raise ValueError("Unknown dataset ", name)
 
         if name == 'hicodet':
@@ -47,6 +54,17 @@ class DataFactory(Dataset):
             self.dataset = HICODet(
                 root=os.path.join(data_root, 'hico_20160224_det/images', partition),
                 anno_file=os.path.join(data_root, 'instances_{}.json'.format(partition)),
+                target_transform=pocket.ops.ToTensor(input_format='dict')
+            )
+        #  add in 20220524 for vidhoi eval
+        elif name == 'vidhoi':
+            self.dataset = vidhoi(
+                # root=os.path.join(data_root, 'vidhoi_test_2'),
+                # root=os.path.join(data_root, 'validation-video/frames/0001/2793806282'), # 3598080384 2793806282
+                # root=os.path.join(data_root, 'validation-video/frames/0005/4564478328'), # 0005/4564478328 work
+                root=os.path.join(data_root, 'validation-video/frames/0010/3359075894'),  # 0010/3359075894
+                # anno_file=os.path.join(data_root, 'instances_{}.json'.format(partition)),
+                anno_file=os.path.join(data_root, 'validation-video/frames/0010/3359075894.json'),
                 target_transform=pocket.ops.ToTensor(input_format='dict')
             )
         else:
@@ -83,6 +101,7 @@ class DataFactory(Dataset):
                     ])
                 ), normalize,
         ])
+        # if it is not train here
         else:
             self.transforms = T.Compose([
                 T.RandomResize([800], max_size=1333),
@@ -96,17 +115,35 @@ class DataFactory(Dataset):
 
     def __getitem__(self, i):
         image, target = self.dataset[i]
-        if self.name == 'hicodet':
+        # if self.name == 'hicodet' or 'vidhoi':
+        if self.name == 'hicodet': # default
             target['labels'] = target['verb']
             # Convert ground truth boxes to zero-based index and the
             # representation from pixel indices to coordinates
             target['boxes_h'][:, :2] -= 1
             target['boxes_o'][:, :2] -= 1
+            image, target = self.transforms(image, target)  # defaults
+
+        elif self.name == 'vidhoi':
+            target['labels'] = target['verb']
+            # Convert ground truth boxes to zero-based index and the
+            # representation from pixel indices to coordinates
+            target['boxes_h'][:, :2] -= 1
+            target['boxes_o'][:, :2] -= 1
+            # if target['boxes_h'] != []:
+            #     target['boxes_h'][:, :2] -= 1
+            # if target['boxes_o'] != []:
+            #     target['boxes_o'][:, :2] -= 1
+            image, target = self.transforms(image, target)  # defaults
+
+
+
         else:
             target['labels'] = target['actions']
             target['object'] = target.pop('objects')
+            image, target = self.transforms(image, target)  # defaults
 
-        image, target = self.transforms(image, target)
+        # image, target = self.transforms(image, target)  #defaults
 
         return image, target
 
@@ -183,7 +220,7 @@ class CustomisedDLE(DistributedLearningEngine):
             gt_bx_o = net.module.recover_boxes(target['boxes_o'], target['size'])
 
             # Associate detected pairs with ground truth pairs
-            labels = torch.zeros_like(scores)
+            labels = torch.zeros_like(scores)  # chansheng yige yu scores xiangtong size de all zero tensor
             unique_hoi = interactions.unique()
             for hoi_idx in unique_hoi:
                 gt_idx = torch.nonzero(target['hoi'] == hoi_idx).squeeze(1)
@@ -194,6 +231,64 @@ class CustomisedDLE(DistributedLearningEngine):
                         gt_bx_o[gt_idx].view(-1, 4)),
                         (boxes_h[det_idx].view(-1, 4),
                         boxes_o[det_idx].view(-1, 4)),
+                        scores[det_idx].view(-1)
+                    )
+
+            meter.append(scores, interactions, labels)
+
+        return meter.eval()
+
+    """additional add test vidhoi method 0602"""
+    @torch.no_grad()
+    def test_vidhoi(self, dataloader):
+        net = self._state.net
+        net.eval()
+
+        dataset = dataloader.dataset.dataset
+        associate = BoxPairAssociation(min_iou=0.5)
+        conversion = torch.from_numpy(np.asarray(
+            dataset.object_n_verb_to_interaction, dtype=float
+        ))
+
+        meter = DetectionAPMeter(
+            557, nproc=1,
+            num_gt=dataset.anno_interaction,
+            algorithm='11P'
+        )
+        for batch in tqdm(dataloader):
+            inputs = pocket.ops.relocate_to_cuda(batch[0])
+            output = net(inputs)
+
+            # Skip images without detections
+            if output is None or len(output) == 0:
+                continue
+            # Batch size is fixed as 1 for inference
+            assert len(output) == 1, f"Batch size is not 1 but {len(output)}."
+            output = pocket.ops.relocate_to_cpu(output[0], ignore=True)
+            target = batch[-1][0]
+            # Format detections
+            boxes = output['boxes']
+            boxes_h, boxes_o = boxes[output['pairing']].unbind(0)
+            objects = output['objects']
+            scores = output['scores']
+            verbs = output['labels']
+            interactions = conversion[objects, verbs]
+            # Recover target box scale
+            gt_bx_h = net.module.recover_boxes(target['boxes_h'], target['size'])
+            gt_bx_o = net.module.recover_boxes(target['boxes_o'], target['size'])
+
+            # Associate detected pairs with ground truth pairs
+            labels = torch.zeros_like(scores)  # chansheng yige yu scores xiangtong size de all zero tensor
+            unique_hoi = interactions.unique()
+            for hoi_idx in unique_hoi:
+                gt_idx = torch.nonzero(target['hoi'] == hoi_idx).squeeze(1)
+                det_idx = torch.nonzero(interactions == hoi_idx).squeeze(1)
+                if len(gt_idx):
+                    labels[det_idx] = associate(
+                        (gt_bx_h[gt_idx].view(-1, 4),
+                         gt_bx_o[gt_idx].view(-1, 4)),
+                        (boxes_h[det_idx].view(-1, 4),
+                         boxes_o[det_idx].view(-1, 4)),
                         scores[det_idx].view(-1)
                     )
 
@@ -277,6 +372,105 @@ class CustomisedDLE(DistributedLearningEngine):
         # Cache results
         for object_idx in range(80):
             interaction_idx = object2int[object_idx]
+            sio.savemat(
+                os.path.join(cache_dir, f'detections_{(object_idx + 1):02d}.mat'),
+                dict(all_boxes=all_results[interaction_idx])
+            )
+
+    @torch.no_grad()
+    def cache_vidhoi(self, dataloader, cache_dir='matlab'):
+        net = self._state.net
+        net.eval()
+
+        dataset = dataloader.dataset.dataset
+        conversion = torch.from_numpy(np.asarray(
+            dataset.object_n_verb_to_interaction, dtype=float
+        ))
+        object2int = dataset.object_to_interaction
+
+        # Include empty images when counting
+        nimages = len(dataset.annotations)
+        all_results = np.empty((557, nimages), dtype=object)
+
+        for i, batch in enumerate(tqdm(dataloader)):
+            inputs = pocket.ops.relocate_to_cuda(batch[0])
+            output = net(inputs)
+
+            # Skip images without detections
+            if output is None or len(output) == 0:
+                continue
+            # Batch size is fixed as 1 for inference
+            assert len(output) == 1, f"Batch size is not 1 but {len(output)}."
+            output = pocket.ops.relocate_to_cpu(output[0], ignore=True)
+            # NOTE Index i is the intra-index amongst images excluding those
+            # without ground truth box pairs
+            image_idx = dataset._idx[i]
+            # Format detections
+            boxes = output['boxes']
+            boxes_h, boxes_o = boxes[output['pairing']].unbind(0)
+            objects = output['objects']
+            scores = output['scores']
+            verbs = output['labels']
+            interactions = conversion[objects, verbs]
+            # Rescale the boxes to original image size
+            ow, oh = dataset.image_size(i)
+            h, w = output['size']
+            scale_fct = torch.as_tensor([
+                ow / w, oh / h, ow / w, oh / h
+            ]).unsqueeze(0)
+            boxes_h *= scale_fct
+            boxes_o *= scale_fct
+
+            # Convert box representation to pixel indices
+            boxes_h[:, 2:] -= 1
+            boxes_o[:, 2:] -= 1
+
+            # Group box pairs with the same predicted class
+            permutation = interactions.argsort()
+            boxes_h = boxes_h[permutation]
+            boxes_o = boxes_o[permutation]
+            interactions = interactions[permutation]
+            scores = scores[permutation]
+
+            # Store results
+            unique_class, counts = interactions.unique(return_counts=True)
+            n = 0
+            for cls_id, cls_num in zip(unique_class, counts):
+                all_results[cls_id.long(), image_idx] = torch.cat([
+                    boxes_h[n: n + cls_num],
+                    boxes_o[n: n + cls_num],
+                    scores[n: n + cls_num, None]
+                ], dim=1).numpy()
+                n += cls_num
+
+        # Replace None with size (0,0) arrays
+        for i in range(557):
+            for j in range(nimages):
+                if all_results[i, j] is None:
+                    all_results[i, j] = np.zeros((0, 0))
+        if not os.path.exists(cache_dir):
+            os.makedirs(cache_dir)
+        # Cache results
+        # print("all_result:\n", all_results)
+        for object_idx in range(78):
+            interaction_idx = object2int[object_idx]
+            """change below"""
+            curr_result = all_results[interaction_idx]
+            curr_result_list = []
+            for i, res in enumerate(curr_result):
+                mid_list = []
+                for j, mid in enumerate(res):
+                    mid_list.append(mid.tolist())
+                # print("res:\n", res)
+                curr_result_list.append(mid_list)
+            # print("curr_result_list:\n", curr_result_list)
+            print(object_idx + 1)
+            # print("curr_result:\n", all_results[interaction_idx])
+            output_json = os.path.join(cache_dir, f'detections_{(object_idx + 1):02d}.json')
+            with open(output_json, 'w') as f:
+                json.dump(curr_result_list, f)
+
+            """end here"""
             sio.savemat(
                 os.path.join(cache_dir, f'detections_{(object_idx + 1):02d}.mat'),
                 dict(all_boxes=all_results[interaction_idx])

@@ -1,0 +1,215 @@
+=> Action: block
+(1 , 4 ), score: 0.0032
+(1 , 5 ), score: 0.0000
+(2 , 4 ), score: 0.0000
+(2 , 5 ), score: 0.0000
+(3 , 4 ), score: 0.0000
+(3 , 5 ), score: 0.0000
+
+=> Action: carry
+(1 , 2 ), score: 0.0000
+(1 , 3 ), score: 0.0000
+(1 , 4 ), score: 0.0576
+(1 , 5 ), score: 0.0001
+(1 , 6 ), score: 0.0000
+(2 , 1 ), score: 0.0000
+(2 , 3 ), score: 0.0000
+(2 , 4 ), score: 0.0000
+(2 , 5 ), score: 0.0000
+(2 , 6 ), score: 0.0000
+(3 , 1 ), score: 0.0000
+(3 , 2 ), score: 0.0000
+(3 , 4 ), score: 0.0000
+(3 , 5 ), score: 0.0000
+(3 , 6 ), score: 0.0000
+
+=> Action: catch
+(1 , 4 ), score: 0.0014
+(1 , 5 ), score: 0.0000
+(2 , 4 ), score: 0.0000
+(2 , 5 ), score: 0.0000
+(3 , 4 ), score: 0.0000
+(3 , 5 ), score: 0.0000
+
+=> Action: dribble
+(1 , 4 ), score: 0.0417
+(1 , 5 ), score: 0.0000
+(2 , 4 ), score: 0.0000
+(2 , 5 ), score: 0.0000
+(3 , 4 ), score: 0.0000
+(3 , 5 ), score: 0.0000
+
+=> Action: drink_with
+(1 , 6 ), score: 0.0000
+(2 , 6 ), score: 0.0000
+(3 , 6 ), score: 0.0000
+
+=> Action: greet
+(1 , 2 ), score: 0.0000
+(1 , 3 ), score: 0.0000
+(2 , 1 ), score: 0.0000
+(2 , 3 ), score: 0.0000
+(3 , 1 ), score: 0.0000
+(3 , 2 ), score: 0.0000
+
+=> Action: hit
+(1 , 4 ), score: 0.0116
+(1 , 5 ), score: 0.0000
+(2 , 4 ), score: 0.0000
+(2 , 5 ), score: 0.0000
+(3 , 4 ), score: 0.0000
+(3 , 5 ), score: 0.0000
+
+=> Action: hold
+(1 , 2 ), score: 0.0000
+(1 , 3 ), score: 0.0000
+(1 , 4 ), score: 0.3290
+(1 , 5 ), score: 0.0001
+(1 , 6 ), score: 0.0000
+(2 , 1 ), score: 0.0000
+(2 , 3 ), score: 0.0000
+(2 , 4 ), score: 0.0000
+(2 , 5 ), score: 0.0000
+(2 , 6 ), score: 0.0000
+(3 , 1 ), score: 0.0000
+(3 , 2 ), score: 0.0000
+(3 , 4 ), score: 0.0000
+(3 , 5 ), score: 0.0000
+(3 , 6 ), score: 0.0000
+
+=> Action: hug
+(1 , 2 ), score: 0.0000
+(1 , 3 ), score: 0.0000
+(2 , 1 ), score: 0.0000
+(2 , 3 ), score: 0.0000
+(3 , 1 ), score: 0.0000
+(3 , 2 ), score: 0.0000
+
+=> Action: inspect
+(1 , 4 ), score: 0.0273
+(1 , 5 ), score: 0.0000
+(1 , 6 ), score: 0.0000
+(2 , 4 ), score: 0.0000
+(2 , 5 ), score: 0.0000
+(2 , 6 ), score: 0.0000
+(3 , 4 ), score: 0.0000
+(3 , 5 ), score: 0.0000
+(3 , 6 ), score: 0.0000
+
+=> Action: kick
+(1 , 4 ), score: 0.1554
+(1 , 5 ), score: 0.0000
+(2 , 4 ), score: 0.0000
+(2 , 5 ), score: 0.0000
+(3 , 4 ), score: 0.0000
+(3 , 5 ), score: 0.0000
+
+=> Action: kiss
+(1 , 2 ), score: 0.0000
+(1 , 3 ), score: 0.0000
+(2 , 1 ), score: 0.0000
+(2 , 3 ), score: 0.0000
+(3 , 1 ), score: 0.0000
+(3 , 2 ), score: 0.0000
+
+=> Action: lick
+(1 , 2 ), score: 0.0000
+(1 , 3 ), score: 0.0000
+(1 , 6 ), score: 0.0000
+(2 , 1 ), score: 0.0000
+(2 , 3 ), score: 0.0000
+(2 , 6 ), score: 0.0000
+(3 , 1 ), score: 0.0000
+(3 , 2 ), score: 0.0000
+(3 , 6 ), score: 0.0000
+
+=> Action: no_interaction
+(1 , 2 ), score: 0.0000
+(1 , 3 ), score: 0.0000
+(1 , 4 ), score: 0.0105
+(1 , 5 ), score: 0.0000
+(1 , 6 ), score: 0.0000
+(2 , 1 ), score: 0.0000
+(2 , 3 ), score: 0.0000
+(2 , 4 ), score: 0.0000
+(2 , 5 ), score: 0.0000
+(2 , 6 ), score: 0.0000
+(3 , 1 ), score: 0.0000
+(3 , 2 ), score: 0.0000
+(3 , 4 ), score: 0.0000
+(3 , 5 ), score: 0.0000
+(3 , 6 ), score: 0.0000
+
+=> Action: open
+(1 , 6 ), score: 0.0000
+(2 , 6 ), score: 0.0000
+(3 , 6 ), score: 0.0000
+
+=> Action: pick_up
+(1 , 4 ), score: 0.0573
+(1 , 5 ), score: 0.0000
+(2 , 4 ), score: 0.0000
+(2 , 5 ), score: 0.0000
+(3 , 4 ), score: 0.0000
+(3 , 5 ), score: 0.0000
+
+=> Action: pour
+(1 , 6 ), score: 0.0000
+(2 , 6 ), score: 0.0000
+(3 , 6 ), score: 0.0000
+
+=> Action: serve
+(1 , 4 ), score: 0.0453
+(1 , 5 ), score: 0.0000
+(2 , 4 ), score: 0.0000
+(2 , 5 ), score: 0.0000
+(3 , 4 ), score: 0.0000
+(3 , 5 ), score: 0.0000
+
+=> Action: sign
+(1 , 4 ), score: 0.0008
+(1 , 5 ), score: 0.0000
+(2 , 4 ), score: 0.0000
+(2 , 5 ), score: 0.0000
+(3 , 4 ), score: 0.0000
+(3 , 5 ), score: 0.0000
+
+=> Action: spin
+(1 , 4 ), score: 0.0001
+(1 , 5 ), score: 0.0000
+(2 , 4 ), score: 0.0000
+(2 , 5 ), score: 0.0000
+(3 , 4 ), score: 0.0000
+(3 , 5 ), score: 0.0000
+
+=> Action: stab
+(1 , 2 ), score: 0.0000
+(1 , 3 ), score: 0.0000
+(2 , 1 ), score: 0.0000
+(2 , 3 ), score: 0.0000
+(3 , 1 ), score: 0.0000
+(3 , 2 ), score: 0.0000
+
+=> Action: tag
+(1 , 2 ), score: 0.0000
+(1 , 3 ), score: 0.0000
+(2 , 1 ), score: 0.0000
+(2 , 3 ), score: 0.0000
+(3 , 1 ), score: 0.0000
+(3 , 2 ), score: 0.0000
+
+=> Action: teach
+(1 , 2 ), score: 0.0000
+(1 , 3 ), score: 0.0000
+(2 , 1 ), score: 0.0000
+(2 , 3 ), score: 0.0000
+(3 , 1 ), score: 0.0000
+(3 , 2 ), score: 0.0000
+
+=> Action: throw
+(1 , 4 ), score: 0.0014
+(1 , 5 ), score: 0.0000
+(2 , 4 ), score: 0.0000
+(2 , 5 ), score: 0.0000
+(3 , 4 ), score: 0.0000
+(3 , 5 ), score: 0.0000
