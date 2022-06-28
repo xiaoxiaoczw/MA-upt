@@ -194,7 +194,7 @@ def initialise(args):
     global dataset, transforms, class_embed
     detr, criterion, postprocessors = build_model(args)
     # add vidhou
-    if args.dataset == 'hicodet':
+    if args.dataset == 'hicodet' or (args.eval and args.hico_weights):  # hico_weights for case to hicodet pretrain weights
         class_embed = torch.nn.Linear(256, 81, bias=True)
     elif args.dataset == 'vidhoi':
         class_embed = torch.nn.Linear(256, 79, bias=True)
@@ -456,6 +456,7 @@ if __name__ == '__main__':
                         help='number of distributed processes')
     parser.add_argument('--eval', action='store_true')
     parser.add_argument('--sanity', action='store_true')
+    parser.add_argument('--hico_weights', action='store_true')
 
     args = parser.parse_args()
     print(args)
