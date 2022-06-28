@@ -16,6 +16,7 @@ from torch.utils.data import (
     DistributedSampler, BatchSampler
 )
 
+import upt.vidhoi.vidhoi
 import sys
 sys.path.append('detr')
 
@@ -119,6 +120,7 @@ class HICODetObject(Dataset):
         # Convert ground truth boxes to zero-based index and the
         # representation from pixel indices to coordinates
         boxes[:, :2] -= 1
+        # 49 as human idx
         labels = torch.cat([
             49 * torch.ones_like(target['object']),
             target['object']
@@ -136,14 +138,69 @@ class HICODetObject(Dataset):
         image, target = self.transforms(image, dict(boxes=boxes, labels=converted_labels))
         return image, target
 
+class VidhoiObject(Dataset):
+    def __init__(self, dataset, transforms, nms_thresh=0.7):
+        self.dataset = dataset
+        self.transforms = transforms
+        self.nms_thresh = nms_thresh
+        # self.conversion = [
+        #      4, 47, 24, 46, 34, 35, 21, 59, 13,  1, 14,  8, 73, 39, 45, 50,  5,
+        #     55,  2, 51, 15, 67, 56, 74, 57, 19, 41, 60, 16, 54, 20, 10, 42, 29,
+        #     23, 78, 26, 17, 52, 66, 33, 43, 63, 68,  3, 64, 49, 69, 12,  0, 53,
+        #     58, 72, 65, 48, 76, 18, 71, 36, 30, 31, 44, 32, 11, 28, 37, 77, 38,
+        #     27, 70, 61, 79,  9,  6,  7, 62, 25, 75, 40, 22
+        # ]
+    def __len__(self):
+        return len(self.dataset)
+    def __getitem__(self, idx):
+        image, target = self.dataset[idx]
+        boxes = torch.cat([
+            target['boxes_h'],
+            target['boxes_o']
+        ])
+        # Convert ground truth boxes to zero-based index and the
+        # representation from pixel indices to coordinates
+        boxes[:, :2] -= 1  # when 0 to -1 not good
+        # labels = torch.cat([
+        #     0 * torch.ones_like(target['object']),
+        #     target['object']
+        # ])
+        # a = target['object'][:, 0]
+        # b = target['object'][:, 1]
+        labels = torch.cat([
+            target['object'][:, 0],
+            target['object'][:, 1]
+        ])
+        # Remove overlapping ground truth boxes
+        # comment at 0627 for test
+        # keep = batched_nms(
+        #     boxes, torch.ones(len(boxes)),
+        #     labels, iou_threshold=self.nms_thresh
+        # )
+        # boxes = boxes[keep]
+        # labels = labels[keep]
+        # Convert HICODet object indices to COCO indices
+        # converted_labels = torch.as_tensor([self.conversion[i.item()] for i in labels])
+        # Apply transform
+        image, target = self.transforms(image, dict(boxes=boxes, labels=labels))
+        return image, target
+
 def initialise(args):
     # Load model and loss function
+    global dataset, transforms, class_embed
     detr, criterion, postprocessors = build_model(args)
-    class_embed = torch.nn.Linear(256, 81, bias=True)
+    # add vidhou
+    if args.dataset == 'hicodet':
+        class_embed = torch.nn.Linear(256, 81, bias=True)
+    elif args.dataset == 'vidhoi':
+        class_embed = torch.nn.Linear(256, 79, bias=True)
+
     if os.path.exists(args.pretrained):
         print(f"Load pre-trained model from {args.pretrained}")
         detr.load_state_dict(torch.load(args.pretrained)['model_state_dict'])
         w, b = detr.class_embed.state_dict().values()
+        # w, b size = 92
+
         keep = [
             1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 13, 14, 15, 16, 17, 18, 19, 20, 21,
             22, 23, 24, 25, 27, 28, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42,
@@ -151,6 +208,8 @@ def initialise(args):
             62, 63, 64, 65, 67, 70, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 84,
             85, 86, 87, 88, 89, 90, 91
         ]
+        print("len(keep): ", len(keep))
+        # 12, 26, 29, 30, 45, 66, 68, 69, 71, 83
         class_embed.load_state_dict(dict(
             weight=w[keep], bias=b[keep]
         ))
@@ -165,6 +224,9 @@ def initialise(args):
         T.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
     ])
     scales = [480, 512, 544, 576, 608, 640, 672, 704, 736, 768, 800]
+    if args.dataset == 'vidhoi':
+        transforms = normalize
+
     if args.partition == 'train2015':
         transforms = T.Compose([
             T.RandomHorizontalFlip(),
@@ -185,13 +247,22 @@ def initialise(args):
             normalize,
         ])
     # Load dataset
-    dataset = HICODetObject(
-        pocket.data.HICODet(
-            root=os.path.join(args.data_root, f'hico_20160224_det/images/{args.partition}'),
-            anno_file=os.path.join(args.data_root, f'instances_{args.partition}.json'),
-            target_transform=pocket.ops.ToTensor(input_format='dict')
-        ), transforms
-    )
+    if args.dataset == 'hicodet':
+        dataset = HICODetObject(
+            pocket.data.HICODet(
+                root=os.path.join(args.data_root, f'hico_20160224_det/images/{args.partition}'),
+                anno_file=os.path.join(args.data_root, f'instances_{args.partition}.json'),
+                target_transform=pocket.ops.ToTensor(input_format='dict')
+            ), transforms
+        )
+    elif args.dataset == 'vidhoi':
+        dataset = VidhoiObject(
+            upt.vidhoi.vidhoi.vidhoi(
+                root=os.path.join(args.data_root, 'validation-video/frames/0010/3359075894'),
+                anno_file=os.path.join(args.data_root, 'validation-video/frames/0010/3359075894.json'),
+                target_transform=pocket.ops.ToTensor(input_format='dict')
+            ), transforms
+        )
 
     return detr, criterion, postprocessors['bbox'], dataset
 
@@ -313,7 +384,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--lr', default=1e-5, type=float)
     parser.add_argument('--lr_backbone', default=1e-6, type=float)
-    parser.add_argument('--batch_size', default=2, type=int)
+    parser.add_argument('--batch_size', default=1, type=int)
     parser.add_argument('--weight_decay', default=1e-4, type=float)
     parser.add_argument('--epochs', default=300, type=int)
     parser.add_argument('--lr_drop', default=200, type=int)
@@ -362,6 +433,7 @@ if __name__ == '__main__':
                         help="Relative classification weight of the no-object class")
 
     # dataset parameters
+    parser.add_argument('--dataset', default='hicodet', type=str)
     parser.add_argument('--partition', default='train2015')
     parser.add_argument('--num_workers', default=2, type=int)
     parser.add_argument('--data_root', default='/home/student-pc/pycharmProject/upt-38/upt/hicodet/')

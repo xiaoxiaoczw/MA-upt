@@ -43,6 +43,7 @@ if __name__ == '__main__':
         "stingray", "turtle", "tiger", "crocodile", "bear", "microwave", "traffic_light", "panda",
         "leopard", "squirrel"
     ]
+
     verbs_name = [
         "lean_on", "watch", "above", "next_to", "behind", "away", "towards", "in_front_of", "hit",
         "hold", "wave", "pat", "carry", "point_to", "touch", "play(instrument)", "release", "ride",
