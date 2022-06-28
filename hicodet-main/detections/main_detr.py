@@ -158,6 +158,7 @@ class VidhoiObject(Dataset):
             target['boxes_h'],
             target['boxes_o']
         ])
+        boxes = boxes.float()
         # Convert ground truth boxes to zero-based index and the
         # representation from pixel indices to coordinates
         boxes[:, :2] -= 1  # when 0 to -1 not good
@@ -167,18 +168,21 @@ class VidhoiObject(Dataset):
         # ])
         # a = target['object'][:, 0]
         # b = target['object'][:, 1]
+        # target['object'][:, 0] += 1
+        # target['object'][:, 1] += 1
         labels = torch.cat([
             target['object'][:, 0],
             target['object'][:, 1]
         ])
         # Remove overlapping ground truth boxes
         # comment at 0627 for test
-        # keep = batched_nms(
-        #     boxes, torch.ones(len(boxes)),
-        #     labels, iou_threshold=self.nms_thresh
-        # )
-        # boxes = boxes[keep]
-        # labels = labels[keep]
+        keep = batched_nms(
+            boxes, torch.ones(len(boxes)),
+            labels, iou_threshold=self.nms_thresh
+        )
+        boxes = boxes[keep]
+        labels = labels[keep]
+
         # Convert HICODet object indices to COCO indices
         # converted_labels = torch.as_tensor([self.conversion[i.item()] for i in labels])
         # Apply transform
@@ -224,8 +228,8 @@ def initialise(args):
         T.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
     ])
     scales = [480, 512, 544, 576, 608, 640, 672, 704, 736, 768, 800]
-    if args.dataset == 'vidhoi':
-        transforms = normalize
+    # if args.dataset == 'vidhoi':
+    #     transforms = normalize
 
     if args.partition == 'train2015':
         transforms = T.Compose([
