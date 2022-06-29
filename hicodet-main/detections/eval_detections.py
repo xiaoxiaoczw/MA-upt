@@ -160,7 +160,8 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Dataset size analysis")
     parser.add_argument('--detection-root', required=True, type=str)
     parser.add_argument('--partition', type=str, default='test2015')
-    parser.add_argument('--data-root', type=str, default='../')
+    # parser.add_argument('--data-root', type=str, default='../')
+    parser.add_argument('--data_root', default='/home/student-pc/pycharmProject/upt-38/upt/hicodet/')
     parser.add_argument('--human-thresh', default=0.05, type=float,
                         help="Threshold used to filter low scoring human detections")
     parser.add_argument('--max-human', default=50, type=int,
