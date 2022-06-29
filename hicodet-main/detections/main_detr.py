@@ -46,13 +46,17 @@ class Engine(pocket.core.DistributedLearningEngine):
         self._state.optimizer.step()
 
     @torch.no_grad()
-    def eval(self, postprocessors, thresh=0.1):
+    def eval(self, postprocessors, args, thresh=0.1):
         self._state.net.eval()
         associate = pocket.utils.BoxAssociation(min_iou=0.5)
+        if args.dataset == 'vidhoi':
+            class_num = 78
+        if args.dataset == 'hicodet':
+            class_num = 80
         meter = pocket.utils.DetectionAPMeter(
-            80, algorithm='INT', nproc=10
+            class_num, algorithm='INT', nproc=10
         )
-        num_gt = torch.zeros(80)
+        num_gt = torch.zeros(class_num)
         if self._train_loader.batch_size != 1:
             raise ValueError(f"The batch size shoud be 1, not {self._train_loader.batch_size}")
         for image, target in tqdm(self._train_loader):
@@ -69,6 +73,8 @@ class Engine(pocket.core.DistributedLearningEngine):
 
             gt_boxes = target[0]['boxes']
             # Denormalise ground truth boxes
+            # if args.dataset == 'hicodet':  # actually need this if? cause in read part is already change the form to cxcywh form so we donot need that
+            #     gt_boxes = box_ops.box_cxcywh_to_xyxy(gt_boxes)
             gt_boxes = box_ops.box_cxcywh_to_xyxy(gt_boxes)
             h, w = target[0]['size']
             scale_fct = torch.stack([w, h, w, h])
@@ -159,6 +165,7 @@ class VidhoiObject(Dataset):
             target['boxes_o']
         ])
         boxes = boxes.float()
+        boxes = box_ops.box_xyxy_to_cxcywh(boxes)  # change box from xyxy form to cxcywh
         # Convert ground truth boxes to zero-based index and the
         # representation from pixel indices to coordinates
         boxes[:, :2] -= 1  # when 0 to -1 not good
@@ -322,7 +329,7 @@ def main(rank, args):
     )
 
     if args.eval:
-        ap, rec = engine.eval(postprocessors)
+        ap, rec = engine.eval(postprocessors, args)
         print(f"The mAP is {ap.mean().item():.4f}, the mRec is {rec.mean().item():.4f}")
     else:
         param_dicts = [
