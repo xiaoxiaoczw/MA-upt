@@ -62,8 +62,8 @@ def main(rank, args):
 
     """change below"""
     for X, y in test_loader:
-        print(X)
-        print(y)
+        # print(X)
+        # print(y)
         # TODO
         # doesnot work yet
         # print(f"Shape of X [N, C, H, W]: {X.shape}")

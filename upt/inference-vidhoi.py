@@ -237,14 +237,10 @@ def output_res(image, output, actions, dev, action=None, thresh=0.2):
     # Find the number of human and object instances
     nh = len(output['pairing'][0].unique())
     no = len(boxes)
-    # pairing 是2维的 上面这句表明[0]记录human的idx 而obj的数量是由box个数来表示的，难道这其中不会有human的box吗？
 
     scores = output['scores']
-    # scores 是表示每一个human object pair的分数吗？
     objects = output['objects']
-    # objects 维度同上 表示对应位置上的object idx 但是这个对应位置表示啥？
     pred = output['labels']
-    # pred 维度同上，表示对应位置上的verb 从此处猜测对应位置上应该是human object pair
 
     # Visualise detected human-object pairs with attached scores
     # test --action 36
@@ -265,7 +261,7 @@ def output_res(image, output, actions, dev, action=None, thresh=0.2):
     new_hoi_bbox_h = []
     new_action = []
     # Print predicted actions and corresponding scores
-    unique_actions = torch.unique(pred)  # 找到不重复的动作
+    unique_actions = torch.unique(pred)
     """draw object"""
     # about unique need more concern
     # TODO
@@ -273,10 +269,6 @@ def output_res(image, output, actions, dev, action=None, thresh=0.2):
     unique_objects = torch.unique(objects)
     for obj in unique_objects:
         sample_idx = torch.nonzero(objects == obj).squeeze(1)
-        # gaicheng zhaodaoyige jiu break
-        # 找出当前obj的所有位置，都画上bx，这样重复也无所谓了 只要有bx就行 只是可能compute cost 比较大
-        # mid1 = []
-        # mid2 = []
         for idx in sample_idx:
             # curr_bx1 = bx_h[idx]
             curr_bx2 = bx_o[idx]
