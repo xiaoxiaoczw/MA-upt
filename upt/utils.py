@@ -128,8 +128,8 @@ class DataFactory(Dataset):
             target['labels'] = target['verb']
             # Convert ground truth boxes to zero-based index and the
             # representation from pixel indices to coordinates
-            target['boxes_h'][:, :2] -= 1
-            target['boxes_o'][:, :2] -= 1
+            # target['boxes_h'][:, :2] -= 1
+            # target['boxes_o'][:, :2] -= 1
             # if target['boxes_h'] != []:
             #     target['boxes_h'][:, :2] -= 1
             # if target['boxes_o'] != []:
