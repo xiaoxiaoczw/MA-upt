@@ -17,6 +17,8 @@ from torch.utils.data import (
 )
 
 import upt.vidhoi.vidhoi
+import json
+
 import sys
 sys.path.append('detr')
 
@@ -165,10 +167,10 @@ class VidhoiObject(Dataset):
             target['boxes_o']
         ])
         boxes = boxes.float()
-        boxes = box_ops.box_xyxy_to_cxcywh(boxes)  # change box from xyxy form to cxcywh
+        # boxes = box_ops.box_xyxy_to_cxcywh(boxes)  # change box from xyxy form to cxcywh
         # Convert ground truth boxes to zero-based index and the
         # representation from pixel indices to coordinates
-        boxes[:, :2] -= 1  # when 0 to -1 not good
+        # boxes[:, :2] -= 1  # when 0 to -1 not good
         # labels = torch.cat([
         #     0 * torch.ones_like(target['object']),
         #     target['object']
@@ -208,6 +210,7 @@ def initialise(args):
 
     if os.path.exists(args.pretrained):
         print(f"Load pre-trained model from {args.pretrained}")
+
         detr.load_state_dict(torch.load(args.pretrained)['model_state_dict'])
         w, b = detr.class_embed.state_dict().values()
         # w, b size = 92
@@ -227,7 +230,31 @@ def initialise(args):
     detr.class_embed = class_embed
     if os.path.exists(args.resume):
         print(f"Resume from model at {args.resume}")
-        detr.load_state_dict(torch.load(args.resume)['model_state_dict'])
+        # detr.load_state_dict(torch.load(args.resume)['model_state_dict'])
+        """change below"""
+        checkpoint = torch.load(args.resume, map_location='cpu')
+        detr.load_state_dict(checkpoint['model_state_dict'])
+        """end here"""
+
+    """check model weight from checkpoint --0701"""
+    # print("detr.state_dict().keys(): ", detr.state_dict().keys())
+    # test = detr.state_dict()
+    # torch.set_printoptions(threshold=None)
+    # print("all model weights: ", test)
+    # print("detr.state_dict(): ", detr.state_dict())
+    # print("detr: ", detr)
+    # datameta = {}
+    # # parameters = detr.parameters()
+    # for idx, p in enumerate(test):
+    #     # list_para = p.detach().cpu().tolist()
+    #     print(p[0])
+    #     print(p[1])
+    #     datameta[p[0]] = p[1].tolist()
+    # output_dir = '/home/student-pc/MA/dataset'
+    # output_json = os.path.join(output_dir, f'{os.path.splitext(args.resume)[0]}.json')
+    # with open(output_json, 'w') as f:
+    #     json.dump(datameta, f)
+    """end here"""
 
     # Prepare dataset transforms
     normalize = T.Compose([
@@ -235,10 +262,10 @@ def initialise(args):
         T.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
     ])
     scales = [480, 512, 544, 576, 608, 640, 672, 704, 736, 768, 800]
-    # if args.dataset == 'vidhoi':
-    #     transforms = normalize
+    if args.dataset == 'vidhoi':
+        transforms = normalize
 
-    if args.partition == 'train2015':
+    elif args.partition == 'train2015':
         transforms = T.Compose([
             T.RandomHorizontalFlip(),
             T.ColorJitter(.4, .4, .4),
