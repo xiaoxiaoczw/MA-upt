@@ -81,7 +81,7 @@ def main(rank, args):
     # add in 20220524
     elif args.dataset == 'vidhoi':
         object_to_target = train_loader.dataset.dataset.object_to_verb
-        args.num_classes = 50  # cannot change to 50
+        args.num_classes = 117  # cannot change to 50 when test but train can
 
     upt = build_detector(args, object_to_target)
 
