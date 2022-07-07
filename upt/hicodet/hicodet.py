@@ -281,8 +281,8 @@ class HICODet(ImageDataset):
             for hoi in anno['hoi']:
                 num_anno[hoi] += 1
 
-        # self._idx = idx
-        self._idx = idx[1:2]  # only for test
+        self._idx = idx
+        # self._idx = idx[1:2]  # only for test
         self._num_anno = num_anno
 
         self._anno = f['annotation']
