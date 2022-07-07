@@ -257,7 +257,7 @@ class UPT(nn.Module):
         region_props = self.prepare_region_proposals(results, hidden_s)
 
         """change cause use gt replace the region_props"""
-        flag = 1
+        flag = 0
         if flag:
             # targets_copy = targets.copy()
             # targets_copy = self.postprocessor(targets_copy, image_sizes)
@@ -266,35 +266,42 @@ class UPT(nn.Module):
                 bbox_o = targets[idx]['boxes_o']
                 out_bbox = torch.cat((targets[idx]['boxes_h'], targets[idx]['boxes_o']), 0)
 
-                boxes = box_ops.box_cxcywh_to_xyxy(out_bbox)
-                h, w = image_sizes.unbind(1)
-                scale_fct = torch.stack([w, h, w, h], dim=1)
-                boxes = boxes * scale_fct
-
-                # # convert to [x0, y0, x1, y1] format
+                """option 1"""
                 # boxes = box_ops.box_cxcywh_to_xyxy(out_bbox)
-                # # and from relative [0, 1] to absolute [0, height] coordinates
-                # img_h, img_w = image_sizes.unbind(1)
-                # scale_fct = torch.stack([img_w, img_h, img_w, img_h], dim=1)
-                # boxes = boxes * scale_fct[:, None, :]
+                # h, w = image_sizes.unbind(1)
+                # scale_fct = torch.stack([w, h, w, h], dim=1)
+                # boxes = boxes * scale_fct
+                """option 2"""
+                # convert to [x0, y0, x1, y1] format
+                boxes = box_ops.box_cxcywh_to_xyxy(out_bbox)
+                # and from relative [0, 1] to absolute [0, height] coordinates
+                img_h, img_w = image_sizes.unbind(1)
+                scale_fct = torch.stack([img_w, img_h, img_w, img_h], dim=1)
+                boxes = boxes * scale_fct[:, None, :]
+                boxes = boxes[0]
 
                 # labels what does that mean?
                 # in hicodet should be the 'objects'
-
                 labels = targets[idx]['object']
-                labels = torch.cat([
-                    0 * torch.ones_like(labels),
-                    labels
-                ])
+                if len(labels[0]) < 2:
+                    labels = torch.cat([
+                        0 * torch.ones_like(labels),
+                        labels
+                    ])
+                # but in vidhoi should be the pair object should use another method
+                else:
+                    labels = torch.cat([
+                        labels[:, 0],
+                        labels[:, 1]
+                    ])
                 """strategy 1. if same dim, replace detector output to gt"""
                 m = len(region_prop['scores'])
                 n = len(labels)
                 if n == m:
-                    region_prop['labels'] = labels
+                    # region_prop['labels'] = labels
                     # region_prop['boxes'] = boxes[0]  # cause dim was (1, n, m) so need to select
                     region_prop['boxes'] = boxes
-                # but in vidhoi should be the 'labels' as well
-                # region_prop['labels'] = targets[idx]['labels']
+
 
                 # should we change the scores or not?
                 # region_prop['scores'] = torch.ones_like(region_prop['labels'])
