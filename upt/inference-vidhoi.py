@@ -329,10 +329,10 @@ def main(args):
     dataset = DataFactory(name=args.dataset, partition=args.partition, data_root=args.data_root)
     # dataset =  dataset.to(device)
     # hicodet exist a relate between object to verb ? conversion dim = 80 means each object has some related actions ?
-    conversion = dataset.dataset.object_to_verb if args.dataset == 'hicodet' \
+    conversion = dataset.dataset.object_to_verb if args.dataset == 'hicodet' or args.dataset == 'vidhoi'\
         else list(dataset.dataset.object_to_action.values())
-    args.num_classes = 117 if args.dataset == 'hicodet' else 24
-    actions = dataset.dataset.verbs if args.dataset == 'hicodet' else \
+    args.num_classes = 117 if args.dataset == 'hicodet' or args.dataset == 'vidhoi' else 24
+    actions = dataset.dataset.verbs if args.dataset == 'hicodet' or args.dataset == 'vidhoi' else \
         dataset.dataset.actions
 
     upt = build_detector(args, conversion)
@@ -391,75 +391,78 @@ def main(args):
             # input_dir = '/home/student-pc/MA/dataset/Vidhoi/validation-video/frames'
             root = os.walk(args.image_path)
             """1. for each video"""
-            for path, dir_list, file_list in root:
-                for dir_name in dir_list:  # 0010
-                    # dir_name.sort()
-                    root_2 = os.walk(os.path.join(path, dir_name))
-                    output_dir = os.path.join(output_path, dir_name)
-                    if not os.path.isdir(output_dir):
-                        os.makedirs(output_dir)
-                    bx_h_list = []
-                    bx_o_list = []
-                    # bbx_list = []
-                    # pairing_list = []
-                    scores_list = []
-                    det_objects_list = []
-                    hoi_objects_list = []
-                    pred_list = []
-                    file_name_list = []
-                    for path_2, dir_list_2, file_list_2 in root_2:  # 3359075894
-                        for dir_name_2 in dir_list_2:
-                            root_3 = os.walk(os.path.join(path_2, dir_name_2))
-                            video_path = os.path.join(path_2, dir_name_2)
-                            print("video_path:", video_path)
-                            output_json = os.path.join(output_dir, f'{dir_name_2}.json')
-                            print("output_json:", output_json)
-                            if os.path.exists(output_json):
-                                print("this video has already done ")
-                                continue
-                            for path_3, dir_list_3, file_list_3 in root_3:  # 3359075894_000001
-                                file_list_3.sort()
-                                for file_name_3 in tqdm(file_list_3, colour='CYAN'):
-                                    # output_dir = os.path.join(output_dir, file_name_3)
-                                    # if not os.path.isdir(output_dir):
-                                    #     os.makedirs(output_dir)
-                                    # print("file_name:", os.path.join(path_3, file_name_3))
-                                    image_path = os.path.join(path_3, file_name_3)
-                                    image = dataset.dataset.load_image(image_path)
-                                    image_tensor, _ = dataset.transforms(image, None)
-                                    if torch.cuda.is_available():
-                                        image_tensor = image_tensor.to(device)  # data try to use gpu
-                                    output = upt([image_tensor])
-                                    # if torch.cuda.is_available():
-                                    #     output = output.to(device)
-                                    if not output:
-                                        bbx_h, bbx_o, scores, hoi_objects, pred = [], [], [], [], []
-                                    else:
-                                        bbx_h, bbx_o, scores, hoi_objects, pred = output_res(image, output[0], actions, device, args.action,
-                                                                                            args.action_score_thresh)
-                                    bx_h_list.append(bbx_h)
-                                    bx_o_list.append(bbx_o)
-                                    scores_list.append(scores)
-                                    # det_objects_list.append(det_objects)
-                                    hoi_objects_list.append(hoi_objects)
-                                    pred_list.append(pred)
-                                    file_name_list.append(file_name_3)
-                                    # break
-
-                                datameta = {
-                                    "bbox_h": bx_h_list,
-                                    "bbox_o": bx_o_list,
-                                    # "det_objects": det_objects_list,
-                                    "scores": scores_list,
-                                    "hoi_objects": hoi_objects_list,
-                                    "pred": pred_list,
-                                    "file_name": file_name_list
-                                }
-                                # output_json = os.path.join(output_dir, f'{file_name_3}.json')
-                                with open(output_json, 'w') as f:
-                                    json.dump(datameta, f)
+            # for path, dir_list, file_list in root:
+            #     for dir_name in dir_list:  # 0010
+            #         # dir_name.sort()
+            #         root_2 = os.walk(os.path.join(path, dir_name))
+            #         output_dir = os.path.join(output_path, dir_name)
+            #         if not os.path.isdir(output_dir):
+            #             os.makedirs(output_dir)
+            #         bx_h_list = []
+            #         bx_o_list = []
+            #         # bbx_list = []
+            #         # pairing_list = []
+            #         scores_list = []
+            #         det_objects_list = []
+            #         hoi_objects_list = []
+            #         pred_list = []
+            #         file_name_list = []
+            #         for path_2, dir_list_2, file_list_2 in root_2:  # 3359075894
+            #             for dir_name_2 in dir_list_2:
+            #                 root_3 = os.walk(os.path.join(path_2, dir_name_2))
+            #                 video_path = os.path.join(path_2, dir_name_2)
+            #                 print("video_path:", video_path)
+            #                 output_json = os.path.join(output_dir, f'{dir_name_2}.json')
+            #                 print("output_json:", output_json)
+            #                 if os.path.exists(output_json):
+            #                     if output_json != '/home/student-pc/MA/dataset/Vidhoi/validation_frame_anno_4inference/0010/3359075894.json':
+            #                         print("this video has already done ")
+            #                         continue
+            #                 for path_3, dir_list_3, file_list_3 in root_3:  # 3359075894_000001
+            #                     file_list_3.sort()
+            #                     for file_name_3 in tqdm(file_list_3, colour='CYAN'):
+            #                         # output_dir = os.path.join(output_dir, file_name_3)
+            #                         # if not os.path.isdir(output_dir):
+            #                         #     os.makedirs(output_dir)
+            #                         # print("file_name:", os.path.join(path_3, file_name_3))
+            #                         image_path = os.path.join(path_3, file_name_3)
+            #                         image = dataset.dataset.load_image(image_path)
+            #                         image_tensor, _ = dataset.transforms(image, None)
+            #                         if torch.cuda.is_available():
+            #                             image_tensor = image_tensor.to(device)  # data try to use gpu
+            #                         output = upt([image_tensor])
+            #                         # if torch.cuda.is_available():
+            #                         #     output = output.to(device)
+            #                         if not output:
+            #                             bbx_h, bbx_o, scores, hoi_objects, pred = [], [], [], [], []
+            #                         else:
+            #                             bbx_h, bbx_o, scores, hoi_objects, pred = output_res(image, output[0], actions, device, args.action,
+            #                                                                                 args.action_score_thresh)
+            #                         bx_h_list.append(bbx_h)
+            #                         bx_o_list.append(bbx_o)
+            #                         scores_list.append(scores)
+            #                         # det_objects_list.append(det_objects)
+            #                         hoi_objects_list.append(hoi_objects)
+            #                         pred_list.append(pred)
+            #                         file_name_list.append(file_name_3)
+            #                         # break
+            #
+            #                     datameta = {
+            #                         "bbox_h": bx_h_list,
+            #                         "bbox_o": bx_o_list,
+            #                         # "det_objects": det_objects_list,
+            #                         "scores": scores_list,
+            #                         "hoi_objects": hoi_objects_list,
+            #                         "pred": pred_list,
+            #                         "file_name": file_name_list
+            #                     }
+            #                     # output_json = os.path.join(output_dir, f'{file_name_3}.json')
+            #                     with open(output_json, 'w') as f:
+            #                         json.dump(datameta, f)
 
             """2. only for one video"""
+            # output_path = '/home/student-pc/MA/dataset/Vidhoi/validation_frame_anno_4inference_testgt'
+            #
             # video_path = args.image_path[-15:]  # 0010/3359075894
             # output_dir = os.path.join(output_path, video_path[:4])
             # video_id = video_path[5:]
@@ -482,8 +485,10 @@ def main(args):
             #         image_path = os.path.join(path, file_name)
             #         image = dataset.dataset.load_image(image_path)
             #         image_tensor, _ = dataset.transforms(image, None)
+            #         if torch.cuda.is_available():
+            #             image_tensor = image_tensor.to(device)  # data try to use gpu
             #         output = upt([image_tensor])
-            #         bbx_h, bbx_o, scores, hoi_objects, pred = output_res(image, output[0], actions, args.action,
+            #         bbx_h, bbx_o, scores, hoi_objects, pred = output_res(image, output[0], actions, device, args.action,
             #                                                              args.action_score_thresh)
             #         bx_h_list.append(bbx_h)
             #         bx_o_list.append(bbx_o)
@@ -506,6 +511,78 @@ def main(args):
             # output_json = os.path.join(output_dir, f'{video_id}.json')
             # with open(output_json, 'w') as f:
             #     json.dump(datameta, f)
+
+            """3. test for replace gt"""
+            video_path = args.image_path[-15:]  # 0010/3359075894
+
+            output_path = '/home/student-pc/MA/dataset/Vidhoi/validation_frame_anno_4inference_testgt'
+            gt_path = args.image_path + '.json'
+            with open(gt_path, 'r') as f:
+                all_frames_target = json.load(f)
+
+            output_dir = os.path.join(output_path, video_path[:4])
+            video_id = video_path[5:]
+            if not os.path.isdir(output_dir):
+                os.makedirs(output_dir)
+            root = os.walk(args.image_path)
+            bx_h_list = []
+            bx_o_list = []
+            # bbx_list = []
+            # pairing_list = []
+            scores_list = []
+            det_objects_list = []
+            hoi_objects_list = []
+            pred_list = []
+            file_name_list = []
+
+            for path, dir_list, file_list in root:
+                file_list.sort()
+                for idx, file_name in enumerate(tqdm(file_list, colour='CYAN')):
+                    if idx > 408:  # cause in 0010/3359075894 video only 408 valid gt
+                        break
+                    image_path = os.path.join(path, file_name)
+                    image = dataset.dataset.load_image(image_path) #default
+                    # image_tensor, _ = dataset.transforms(image, None)
+                    image_tensor, target_tensor = dataset[idx]
+                    # if target_tensor == torch.Size([]):
+
+                    # image_tensor, target_tensor = dataset.transforms(image, target)
+                    if torch.cuda.is_available():
+                        image_tensor = image_tensor.to(device)  # data try to use gpu
+                        # target = target.to(device)  # data try to use gpu
+                    output = upt([image_tensor], [target_tensor])
+
+                    """add target /gt here"""
+                    # _, target = dataset[idx]
+                    # target = all_frames_target['annotation'][idx]
+                    # target = torch.Tensor(target)
+                    # target = pocket.ops.relocate_to_cuda(target)
+                    # output = upt([image_tensor], [target])
+                    """end here"""
+
+                    bbx_h, bbx_o, scores, hoi_objects, pred = output_res(image, output[0], actions, device, args.action,
+                                                   args.action_score_thresh)
+                    bx_h_list.append(bbx_h)
+                    bx_o_list.append(bbx_o)
+                    scores_list.append(scores)
+                    # det_objects_list.append(det_objects)
+                    hoi_objects_list.append(hoi_objects)
+                    pred_list.append(pred)
+                    file_name_list.append(file_name)
+                    # break
+
+            datameta = {
+                "bbox_h": bx_h_list,
+                "bbox_o": bx_o_list,
+                # "det_objects": det_objects_list,
+                "scores": scores_list,
+                "hoi_objects": hoi_objects_list,
+                "pred": pred_list,
+                "file_name": file_name_list
+            }
+            output_json = os.path.join(output_dir, f'{video_id}.json')
+            with open(output_json, 'w') as f:
+                json.dump(datameta, f)
         else:
             image = dataset.dataset.load_image(args.image_path)
             image_tensor, _ = dataset.transforms(image, None)

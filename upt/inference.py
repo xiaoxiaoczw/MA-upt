@@ -204,8 +204,8 @@ def visualise_entire_image(image, output, actions, action=None, thresh=0.2):
     plt.axis('off')
     ax = plt.gca()
     # draw_boxes(ax, boxes) # default
-    draw_objects(ax, boxes, pairing, objects)
-    # draw_hoi(ax, boxes, unique_actions, scores, thresh, pred, image, pairing, actions, objects)
+    # draw_objects(ax, boxes, pairing, objects)
+    draw_hoi(ax, boxes, unique_actions, scores, thresh, pred, image, pairing, actions, objects)
 
     plt.savefig("./cooktest/results/curr_output.jpg")
     plt.show()
