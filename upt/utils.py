@@ -194,8 +194,12 @@ class CustomisedDLE(DistributedLearningEngine):
         )
         for batch in tqdm(dataloader):
             inputs = pocket.ops.relocate_to_cuda(batch[0])
-            output = net(inputs)
+            # output = net(inputs)  # defaults
 
+            """version for gt replace detector output 0706 """
+            target = pocket.ops.relocate_to_cuda(batch[-1])
+            output = net(inputs, targets=target)
+            """end here"""
             # Skip images without detections
             if output is None or len(output) == 0:
                 continue

@@ -251,7 +251,43 @@ class UPT(nn.Module):
 
         results = {'pred_logits': outputs_class[-1], 'pred_boxes': outputs_coord[-1]}
         results = self.postprocessor(results, image_sizes)
-        region_props = self.prepare_region_proposals(results, hs[-1])
+
+        hidden_s = hs[-1]
+        # region_props = self.prepare_region_proposals(results, hs[-1])
+        region_props = self.prepare_region_proposals(results, hidden_s)
+
+        """change cause use gt replace the region_props"""
+        flag = 0
+        if flag:
+            # targets_copy = targets.copy()
+            # targets_copy = self.postprocessor(targets_copy, image_sizes)
+            for idx, region_prop in enumerate(region_props):
+                bbox_h = targets[idx]['boxes_h']
+                bbox_o = targets[idx]['boxes_o']
+                out_bbox = torch.cat((targets[idx]['boxes_h'], targets[idx]['boxes_o']), 0)
+                boxes = box_ops.box_cxcywh_to_xyxy(out_bbox)
+                # and from relative [0, 1] to absolute [0, height] coordinates
+                img_h, img_w = image_sizes.unbind(1)
+                scale_fct = torch.stack([img_w, img_h, img_w, img_h], dim=1)
+                boxes = boxes * scale_fct[:, None, :]
+
+                # region_prop['boxes'] = boxes[0]  # cause dim was (1, n, m) so need to select
+                region_prop['boxes'] = boxes  # cause dim was (1, n, m) so need to select
+                # labels what does that mean?
+                # in hicodet should be the 'objects'
+                labels = targets[idx]['object']
+                region_prop['labels'] = torch.cat([
+                    0 * torch.ones_like(labels),
+                    labels
+                ])
+                # but in vidhoi should be the 'labels' as well
+                # region_prop['labels'] = targets[idx]['labels']
+
+                # should we change the scores or not?
+                # region_prop['scores'] = torch.ones_like(region_prop['labels'])
+                # or not? notice that the output score dim may not same as gt
+                region_prop['scores'] = region_prop['scores']
+        """end here"""
 
         logits, prior, bh, bo, objects, attn_maps = self.interaction_head(
             features[-1].tensors, image_sizes, region_props
