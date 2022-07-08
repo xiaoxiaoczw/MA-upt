@@ -107,7 +107,7 @@ def main(rank, args):
         elif args.dataset == 'vcoco':
             engine.cache_vcoco(test_loader, args.output_dir)
         elif args.dataset == 'vidhoi':
-            engine.cache_vidhoi(test_loader, args.output_dir)
+            engine.cache_vidhoi(test_loader, args, args.output_dir)
         return
 
     if args.eval:
