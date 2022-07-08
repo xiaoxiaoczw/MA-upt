@@ -474,8 +474,8 @@ if __name__ == '__main__':
     parser.add_argument('--dataset', default='hicodet', type=str)
     parser.add_argument('--partition', default='train2015')
     parser.add_argument('--num_workers', default=2, type=int)
-    parser.add_argument('--data_root', default='/home/student-pc/pycharmProject/upt-38/upt/hicodet/')
-    # parser.add_argument('--data_root', default='../')
+    # parser.add_argument('--data_root', default='/home/student-pc/pycharmProject/MA-upt/hicodet/')
+    parser.add_argument('--data_root', default='../')
 
     # training parameters
     parser.add_argument('--device', default='cuda',
@@ -484,7 +484,7 @@ if __name__ == '__main__':
     parser.add_argument('--seed', default=42, type=int)
     parser.add_argument('--pretrained', default='', help='Start from a pre-trained model')
     parser.add_argument('--resume', default='', help='Resume from a model')
-    parser.add_argument('--output_dir', default='checkpoints')
+    parser.add_argument('--output_dir', default='output_checkpoints')
     parser.add_argument('--print-interval', default=1000, type=int)
     parser.add_argument('--world_size', default=1, type=int,
                         help='number of distributed processes')
