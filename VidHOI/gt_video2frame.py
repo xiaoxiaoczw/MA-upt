@@ -9,6 +9,26 @@ import pickle
 #
 
 if __name__ == '__main__':
+    objects_name = [
+        "person", "car", "guitar", "chair", "handbag", "toy", "baby_seat", "cat", "bottle", "backpack",
+        "motorcycle", "ball/sports_ball", "laptop", "table", "surfboard", "camera", "sofa",
+        "screen/monitor", "bicycle", "vegetables", "dog", "fruits", "cake", "cellphone", "cup",
+        "bench", "snowboard", "skateboard", "bread", "bus/truck", "ski", "suitcase", "stool", "bat",
+        "elephant", "fish", "baby_walker", "dish", "watercraft", "scooter", "pig", "refrigerator",
+        "horse", "crab", "bird", "piano", "cattle/cow", "lion", "chicken", "camel", "electric_fan",
+        "toilet", "sheep/goat", "rabbit", "train", "penguin", "hamster/rat", "snake", "frisbee",
+        "aircraft", "oven", "racket", "faucet", "antelope", "duck", "stop_sign", "sink", "kangaroo",
+        "stingray", "turtle", "tiger", "crocodile", "bear", "microwave", "traffic_light", "panda",
+        "leopard", "squirrel"
+    ]
+    verbs_name = [
+        "lean_on", "watch", "above", "next_to", "behind", "away", "towards", "in_front_of", "hit",
+        "hold", "wave", "pat", "carry", "point_to", "touch", "play(instrument)", "release", "ride",
+        "grab", "lift", "use", "press", "inside", "caress", "pull", "get_on", "cut", "hug", "bite",
+        "open", "close", "throw", "kick", "drive", "get_off", "push", "wave_hand_to", "feed", "chase",
+        "kiss", "speak_to", "beneath", "smell", "clean", "lick", "squeeze", "shake_hand_with", "knock",
+        "hold_hand_of", "shout_at"
+    ]
 
     total_frames = 0
     result_dir = '/home/student-pc/MA/dataset/Vidhoi/validation-annotation/validation'
@@ -96,26 +116,7 @@ if __name__ == '__main__':
                         'get_on',
                         'get_off',
                     ]
-                    objects_name = [
-                         "person", "car", "guitar", "chair", "handbag", "toy", "baby_seat", "cat", "bottle", "backpack",
-                         "motorcycle", "ball/sports_ball", "laptop", "table", "surfboard", "camera", "sofa",
-                         "screen/monitor", "bicycle", "vegetables", "dog", "fruits", "cake", "cellphone", "cup",
-                         "bench", "snowboard", "skateboard", "bread", "bus/truck", "ski", "suitcase", "stool", "bat",
-                         "elephant", "fish", "baby_walker", "dish", "watercraft", "scooter", "pig", "refrigerator",
-                         "horse", "crab", "bird", "piano", "cattle/cow", "lion", "chicken", "camel", "electric_fan",
-                         "toilet", "sheep/goat", "rabbit", "train", "penguin", "hamster/rat", "snake", "frisbee",
-                         "aircraft", "oven", "racket", "faucet", "antelope", "duck", "stop_sign", "sink", "kangaroo",
-                         "stingray", "turtle", "tiger", "crocodile", "bear", "microwave", "traffic_light", "panda",
-                         "leopard", "squirrel"
-                    ]
-                    verbs_name = [
-                         "lean_on", "watch", "above", "next_to", "behind", "away", "towards", "in_front_of", "hit",
-                         "hold", "wave", "pat", "carry", "point_to", "touch", "play(instrument)", "release", "ride",
-                         "grab", "lift", "use", "press", "inside", "caress", "pull", "get_on", "cut", "hug", "bite",
-                         "open", "close", "throw", "kick", "drive", "get_off", "push", "wave_hand_to", "feed", "chase",
-                         "kiss", "speak_to", "beneath", "smell", "clean", "lick", "squeeze", "shake_hand_with", "knock",
-                         "hold_hand_of", "shout_at"
-                    ]
+
 
                     # chuliwei meiyou shuomingwenzi zhiyou list de yizhongdongxi
                     sub_obj_list = []
