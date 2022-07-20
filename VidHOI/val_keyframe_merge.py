@@ -70,16 +70,18 @@ if __name__ == '__main__':
         # form like /home/student-pc/MA/dataset/Vidhoi/validation-video/frames/0010/3359075894/3359075894_000001.jpg
         frame_name = video_id + '_' + frame_id + '.jpg'
         image_file = os.path.join(image_path, video_folder, video_id, frame_name)
+        if not os.path.exists(image_file):
+            continue
         img = imread(image_file)
         img_out_file = os.path.join(output_path, frame_name)
         imwrite(img_out_file, img)
 
         """rewrite the keyframe json"""
         anno = {
-            "boxes_h": bbox_h,
-            "boxes_o": bbox_o,
+            "boxes_h": [bbox_h],
+            "boxes_o": [bbox_o],
             "hoi": [0],
-            "object": obj_pair,
+            "object": [obj_pair],
             "verb": verb_cls
         }
         anno_list.append(anno)
