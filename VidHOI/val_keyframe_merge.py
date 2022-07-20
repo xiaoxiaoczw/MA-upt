@@ -43,14 +43,14 @@ if __name__ == '__main__':
         keyframes = json.load(f)
 
     """add train-test split"""
-    val_split = 0.25
-    train_idx, val_idx = train_test_split(list(range(len(keyframes))), test_size=val_split)
-    output_path_train = os.path.join(output_path, 'train')
-    output_path_test = os.path.join(output_path, 'test')
-    if not os.path.isdir(output_path_train):
-        os.makedirs(output_path_train)
-    if not os.path.isdir(output_path_test):
-        os.makedirs(output_path_test)
+    # val_split = 0.25
+    # train_idx, val_idx = train_test_split(list(range(len(keyframes))), test_size=val_split)
+    # output_path_train = os.path.join(output_path, 'train')
+    # output_path_test = os.path.join(output_path, 'test')
+    # if not os.path.isdir(output_path_train):
+    #     os.makedirs(output_path_train)
+    # if not os.path.isdir(output_path_test):
+    #     os.makedirs(output_path_test)
 
     anno_list = []
     train_anno_list, test_anno_list = [], []
@@ -66,6 +66,7 @@ if __name__ == '__main__':
     train_frame_name_list, test_frame_name_list = [], []
     train_size_list, test_size_list = [], []
 
+    flag = '0'
     for idx, curr_frame in enumerate(tqdm(keyframes)):
         video_folder = curr_frame['video_folder']  # 0010
         video_id = curr_frame['video_id']  # 3359075894
@@ -83,37 +84,89 @@ if __name__ == '__main__':
         """get correspond image path"""
         # form like /home/student-pc/MA/dataset/Vidhoi/validation-video/frames/0010/3359075894/3359075894_000001.jpg
         frame_name = video_id + '_' + frame_id + '.jpg'
-        image_file = os.path.join(image_path, video_folder, video_id, frame_name)
-        if not os.path.exists(image_file):
-            continue
-        img = imread(image_file)
-        img_out_file = os.path.join(output_path, frame_name)
+
+        check = video_folder + '_' + video_id + '_' + frame_id
+
+        bbox_h_list.append(bbox_h)
+        bbox_o_list.append(bbox_o)
+        hoi_list.append(0)
+        object_list.append(obj_pair)
+        verb_list.append(verb_cls)
+
+        if check != flag:
+            flag = check
+            if idx != 0:
+                """rewrite the keyframe json"""
+                anno = {
+                    "boxes_h": bbox_h_list,
+                    "boxes_o": bbox_o_list,
+                    "hoi": hoi_list,
+                    "object": object_list,
+                    "verb": verb_list
+                }
+                anno_list.append(anno)
+                frame_name_list.append(frame_name)
+                size_list.append([width, height])
+                # if idx in train_idx:
+                #     train_img_out_file = os.path.join(output_path_train, frame_name)
+                #     imwrite(train_img_out_file, img)
+                #     train_anno_list.append(anno)
+                #     train_frame_name_list.append(frame_name)
+                #     train_size_list.append([width, height])
+                # elif idx in val_idx:
+                #     test_img_out_file = os.path.join(output_path_test, frame_name)
+                #     imwrite(test_img_out_file, img)
+                #     test_anno_list.append(anno)
+                #     test_frame_name_list.append(frame_name)
+                #     test_size_list.append([width, height])
+            bbox_h_list = []
+            bbox_o_list = []
+            hoi_list = []
+            object_list = []
+            verb_list = []
+            bbox_h_list.append(bbox_h)
+            bbox_o_list.append(bbox_o)
+            hoi_list.append(0)
+            object_list.append(obj_pair)
+            verb_list.append(verb_cls)
+        else:
+            bbox_h_list.append(bbox_h)
+            bbox_o_list.append(bbox_o)
+            hoi_list.append(0)
+            object_list.append(obj_pair)
+            verb_list.append(verb_cls)
+
+        # image_file = os.path.join(image_path, video_folder, video_id, frame_name)
+        # if not os.path.exists(image_file):
+        #     continue
+        # img = imread(image_file)
+        # img_out_file = os.path.join(output_path, frame_name)
         # store images for all
         # imwrite(img_out_file, img)
 
         """rewrite the keyframe json"""
-        anno = {
-            "boxes_h": [bbox_h],
-            "boxes_o": [bbox_o],
-            "hoi": [0],
-            "object": [obj_pair],
-            "verb": verb_cls
-        }
-        anno_list.append(anno)
-        frame_name_list.append(frame_name)
-        size_list.append([width, height])
-        if idx in train_idx:
-            train_img_out_file = os.path.join(output_path_train, frame_name)
-            imwrite(train_img_out_file, img)
-            train_anno_list.append(anno)
-            train_frame_name_list.append(frame_name)
-            train_size_list.append([width, height])
-        elif idx in val_idx:
-            test_img_out_file = os.path.join(output_path_test, frame_name)
-            imwrite(test_img_out_file, img)
-            test_anno_list.append(anno)
-            test_frame_name_list.append(frame_name)
-            test_size_list.append([width, height])
+        # anno = {
+        #     "boxes_h": [bbox_h],
+        #     "boxes_o": [bbox_o],
+        #     "hoi": [0],
+        #     "object": [obj_pair],
+        #     "verb": [verb_cls]
+        # }
+        # anno_list.append(anno)
+        # frame_name_list.append(frame_name)
+        # size_list.append([width, height])
+        # if idx in train_idx:
+        #     train_img_out_file = os.path.join(output_path_train, frame_name)
+        #     imwrite(train_img_out_file, img)
+        #     train_anno_list.append(anno)
+        #     train_frame_name_list.append(frame_name)
+        #     train_size_list.append([width, height])
+        # elif idx in val_idx:
+        #     test_img_out_file = os.path.join(output_path_test, frame_name)
+        #     imwrite(test_img_out_file, img)
+        #     test_anno_list.append(anno)
+        #     test_frame_name_list.append(frame_name)
+        #     test_size_list.append([width, height])
 
     datameta = {
         "annotation": anno_list,
@@ -122,28 +175,29 @@ if __name__ == '__main__':
         "objects_name": objects_name,
         "verbs_name": verbs_name
     }
-    train_datameta = {
-        "annotation": train_anno_list,
-        "frame_name": train_frame_name_list,
-        "size": train_size_list,
-        "objects_name": objects_name,
-        "verbs_name": verbs_name
-    }
-    test_datameta = {
-        "annotation": test_anno_list,
-        "frame_name": test_frame_name_list,
-        "size": test_size_list,
-        "objects_name": objects_name,
-        "verbs_name": verbs_name
-    }
+    # train_datameta = {
+    #     "annotation": train_anno_list,
+    #     "frame_name": train_frame_name_list,
+    #     "size": train_size_list,
+    #     "objects_name": objects_name,
+    #     "verbs_name": verbs_name
+    # }
+    # test_datameta = {
+    #     "annotation": test_anno_list,
+    #     "frame_name": test_frame_name_list,
+    #     "size": test_size_list,
+    #     "objects_name": objects_name,
+    #     "verbs_name": verbs_name
+    # }
     # store json file for all
-    # output_json = os.path.join(input_dir, 'val_keyframe_merge.json')
-    # with open(output_json, 'w') as f:
-    #     json.dump(datameta, f)
+    output_json = os.path.join(input_dir, 'val_keyframe_merge_new.json')
+    with open(output_json, 'w') as f:
+        json.dump(datameta, f)
 
-    train_output_json = os.path.join(input_dir, 'val_keyframe_train.json')
-    with open(train_output_json, 'w') as f:
-        json.dump(train_datameta, f)
-    test_output_json = os.path.join(input_dir, 'val_keyframe_test.json')
-    with open(test_output_json, 'w') as f:
-        json.dump(test_datameta, f)
+    # save train-test split json result
+    # train_output_json = os.path.join(input_dir, 'val_keyframe_train.json')
+    # with open(train_output_json, 'w') as f:
+    #     json.dump(train_datameta, f)
+    # test_output_json = os.path.join(input_dir, 'val_keyframe_test.json')
+    # with open(test_output_json, 'w') as f:
+    #     json.dump(test_datameta, f)
